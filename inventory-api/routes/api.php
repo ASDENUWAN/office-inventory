@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryTypeController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ItemController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -83,4 +84,50 @@ Route::middleware('auth:sanctum')->group(function () {
         '/categories/{category}',
         [CategoryController::class, 'destroy']
     )->middleware('can:categories.delete');
+});
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // View all items
+    Route::get(
+        '/items',
+        [ItemController::class, 'index']
+    )->middleware('can:items.view');
+
+    // Create an item
+    Route::post(
+        '/items',
+        [ItemController::class, 'store']
+    )->middleware('can:items.create');
+
+    // View one item
+    Route::get(
+        '/items/{item}',
+        [ItemController::class, 'show']
+    )->middleware('can:items.view');
+
+    // Update item details
+    Route::put(
+        '/items/{item}',
+        [ItemController::class, 'update']
+    )->middleware('can:items.update');
+
+    Route::patch(
+        '/items/{item}',
+        [ItemController::class, 'update']
+    )->middleware('can:items.update');
+
+    // Adjust item quantity
+    Route::patch(
+        '/items/{item}/quantity',
+        [ItemController::class, 'adjustQuantity']
+    )->middleware('can:items.adjust-quantity');
+
+    // Delete an item
+    Route::delete(
+        '/items/{item}',
+        [ItemController::class, 'destroy']
+    )->middleware('can:items.delete');
 });
