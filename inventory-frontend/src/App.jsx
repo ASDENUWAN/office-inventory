@@ -8,6 +8,8 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 
+import CategoryTypesPage from "./pages/CategoryTypesPage";
+
 export default function App() {
   return (
     <Routes>
@@ -36,34 +38,11 @@ export default function App() {
             />
           </Route>
 
-          {/* Categories */}
-          <Route element={<PermissionRoute permission="categories.view" />}>
-            <Route
-              path="/categories"
-              element={
-                <ModulePlaceholder
-                  title="Categories"
-                  description="Manage dynamic category values."
-                  endpoint="GET /api/categories"
-                />
-              }
-            />
-          </Route>
-
           {/* Category Types */}
           <Route
             element={<PermissionRoute permission="category-types.manage" />}
           >
-            <Route
-              path="/category-types"
-              element={
-                <ModulePlaceholder
-                  title="Category Types"
-                  description="Manage category groups."
-                  endpoint="GET /api/category-types"
-                />
-              }
-            />
+            <Route path="/category-types" element={<CategoryTypesPage />} />
           </Route>
 
           {/* User Management */}
