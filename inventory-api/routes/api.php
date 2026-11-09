@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryTypeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemController;
@@ -9,6 +10,30 @@ use App\Http\Controllers\ItemController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+// Public login route
+Route::post('/login', [
+    AuthController::class,
+    'login'
+])->middleware('throttle:5,1');
+
+
+// Protected authentication routes
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Get currently authenticated user
+    Route::get('/me', [
+        AuthController::class,
+        'me'
+    ]);
+
+    // Logout authenticated user
+    Route::post('/logout', [
+        AuthController::class,
+        'logout'
+    ]);
+});
 
 
 Route::middleware([
