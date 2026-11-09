@@ -8,6 +8,8 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 
+import UsersPage from "./pages/UsersPage";
+
 import CategoryTypesPage from "./pages/CategoryTypesPage";
 import CategoriesPage from "./pages/CategoriesPage";
 
