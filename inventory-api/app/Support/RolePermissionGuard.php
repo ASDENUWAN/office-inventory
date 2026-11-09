@@ -18,7 +18,7 @@ class RolePermissionGuard
         return str_starts_with($name, 'custom.');
     }
 
-    // Determine whether a user may grant a permission.
+    // Check whether an administrator can grant a permission.
     public function canGrant(
         User $user,
         Permission $permission
@@ -27,21 +27,19 @@ class RolePermissionGuard
             return true;
         }
 
-        // Delegated admins may grant custom permissions.
         if ($this->isCustomPermission($permission->name)) {
             return $user->can('permissions.assign');
         }
 
-        // Otherwise, they must already have the permission.
         return $user->can($permission->name);
     }
 
-    // Determine whether a role is manageable.
+    // Check whether an administrator can manage a role.
     public function canManageRole(
         User $user,
         Role $role
     ): bool {
-        // Nobody may modify the reserved role here.
+        // Super Admin is reserved.
         if ($role->name === 'Super Admin') {
             return false;
         }
@@ -54,13 +52,54 @@ class RolePermissionGuard
             return true;
         }
 
-        // Admin cannot manage roles with privileges
-        // that they are not allowed to grant.
+        // Cannot manage roles containing permissions
+        // beyond the administrator's authority.
         return $role->permissions()
             ->get()
             ->every(
                 fn(Permission $permission) =>
                 $this->canGrant($user, $permission)
+            );
+    }
+
+    // NEW: Check whether an administrator can manage a user.
+    public function canManageUser(
+        User $actor,
+        User $target
+    ): bool {
+        // Do not allow changing your own account
+        // through administrative management endpoints.
+        if ($actor->is($target)) {
+            return false;
+        }
+
+        // Protect every Super Admin account.
+        if ($target->hasRole('Super Admin')) {
+            return false;
+        }
+
+        // Super Admin can manage other regular users.
+        if ($this->isSuperAdmin($actor)) {
+            return true;
+        }
+
+        // Check roles the target currently has.
+        $canManageExistingRoles = $target->roles()
+            ->get()
+            ->every(
+                fn(Role $role) =>
+                $this->canManageRole($actor, $role)
+            );
+
+        if (!$canManageExistingRoles) {
+            return false;
+        }
+
+        // Also protect users with direct permissions.
+        return $target->getDirectPermissions()
+            ->every(
+                fn(Permission $permission) =>
+                $this->canGrant($actor, $permission)
             );
     }
 }
