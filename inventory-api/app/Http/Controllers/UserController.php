@@ -143,4 +143,37 @@ class UserController extends Controller
             'created_at' => $user->created_at,
         ];
     }
+
+    /**
+     * GET /api/users/assignable-roles
+     *
+     * Return only roles the authenticated user
+     * is authorized to assign.
+     */
+    public function assignableRoles(
+        Request $request,
+        RolePermissionGuard $guard
+    ): JsonResponse {
+
+        $actor = $request->user();
+
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->where('name', '!=', 'Super Admin')
+            ->orderBy('name')
+            ->get()
+            ->filter(
+                fn(Role $role) =>
+                $guard->canManageRole($actor, $role)
+            )
+            ->map(fn(Role $role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $roles,
+        ]);
+    }
 }

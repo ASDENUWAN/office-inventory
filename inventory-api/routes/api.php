@@ -115,6 +115,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
+Route::get(
+    '/users/assignable-roles',
+    [UserController::class, 'assignableRoles']
+)->middleware('can:users.assign-roles');
+
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // Get all users
