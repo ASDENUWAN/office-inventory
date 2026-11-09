@@ -1,124 +1,76 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 
 import { useAuth } from "../context/AuthContext";
+import { navigationItems } from "../config/navigation";
 
 export default function DashboardPage() {
-  const { user, roles, permissions, session, logout, hasPermission } =
-    useAuth();
+  const { user, roles, permissions, session, hasPermission } = useAuth();
 
-  const navigate = useNavigate();
-
-  const [error, setError] = useState("");
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    setError("");
-    setLoggingOut(true);
-
-    try {
-      await logout();
-
-      navigate("/login", {
-        replace: true,
-      });
-    } catch {
-      setError("Logout failed. Please try again.");
-    } finally {
-      setLoggingOut(false);
-    }
-  };
+  // Modules available to the current user.
+  const accessibleModules = navigationItems.filter(
+    (item) =>
+      item.path !== "/dashboard" &&
+      (!item.permission || hasPermission(item.permission)),
+  );
 
   return (
-    <main className="dashboard-container">
-      <header className="dashboard-header">
-        <div>
-          <h1>Office Inventory</h1>
-          <p className="muted">Management Dashboard</p>
+    <div className="dashboard-page">
+      <div className="welcome-panel">
+        <h1>Welcome back, {user?.name}!</h1>
+
+        <p>Welcome to the Office Inventory Management System.</p>
+      </div>
+
+      {/* Account summary */}
+      <div className="summary-grid">
+        <div className="summary-card">
+          <p>Assigned Roles</p>
+          <h2>{roles.length}</h2>
         </div>
 
-        <button
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="secondary-button"
-        >
-          {loggingOut ? "Logging out..." : "Logout"}
-        </button>
-      </header>
+        <div className="summary-card">
+          <p>Available Permissions</p>
+          <h2>{permissions.length}</h2>
+        </div>
 
-      {error && (
-        <p className="error-message" role="alert">
-          {error}
-        </p>
-      )}
+        <div className="summary-card">
+          <p>Account Type</p>
+          <h3>
+            {session?.is_super_admin ? "Super Admin" : roles[0] || "No Role"}
+          </h3>
+        </div>
+      </div>
 
-      <section className="panel">
-        <h2>Welcome, {user?.name}!</h2>
+      {/* Available modules */}
+      <section className="dashboard-section">
+        <h2>Available Modules</h2>
 
-        <p>
-          <strong>Email:</strong> {user?.email}
-        </p>
-
-        <p>
-          <strong>Roles:</strong> {roles.join(", ") || "None"}
+        <p className="muted">
+          These modules are visible according to your permissions.
         </p>
 
-        <p>
-          <strong>Super Admin:</strong> {session?.is_super_admin ? "Yes" : "No"}
-        </p>
-      </section>
-
-      <section className="panel">
-        <h2>Your Permissions</h2>
-
-        <p className="muted">Permissions returned by Laravel.</p>
-
-        {permissions.length === 0 ? (
-          <p>No permissions assigned.</p>
+        {accessibleModules.length === 0 ? (
+          <div className="panel">
+            <p>
+              No management modules are currently available to your account.
+            </p>
+          </div>
         ) : (
-          <div className="permission-list">
-            {permissions.map((permission) => (
-              <span className="permission-badge" key={permission}>
-                {permission}
-              </span>
+          <div className="module-grid">
+            {accessibleModules.map((module) => (
+              <Link to={module.path} key={module.path} className="module-card">
+                <span className="module-icon">{module.icon}</span>
+
+                <h3>{module.label}</h3>
+
+                <p>Open {module.label.toLowerCase()} module</p>
+
+                <span className="module-arrow">View module →</span>
+              </Link>
             ))}
           </div>
         )}
       </section>
-
-      <section className="panel">
-        <h2>Permission Check Examples</h2>
-
-        <div className="permission-checks">
-          <p>
-            Create Items:{" "}
-            <strong>
-              {hasPermission("items.create") ? "Allowed" : "Not Allowed"}
-            </strong>
-          </p>
-
-          <p>
-            Delete Items:{" "}
-            <strong>
-              {hasPermission("items.delete") ? "Allowed" : "Not Allowed"}
-            </strong>
-          </p>
-
-          <p>
-            Create Roles:{" "}
-            <strong>
-              {hasPermission("roles.create") ? "Allowed" : "Not Allowed"}
-            </strong>
-          </p>
-
-          <p>
-            Assign User Roles:{" "}
-            <strong>
-              {hasPermission("users.assign-roles") ? "Allowed" : "Not Allowed"}
-            </strong>
-          </p>
-        </div>
-      </section>
-    </main>
+    </div>
   );
 }
