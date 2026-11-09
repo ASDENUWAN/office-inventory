@@ -496,7 +496,7 @@ export default function UsersPage() {
                       type="password"
                       value={form.password}
                       onChange={handleChange}
-                      minLength={12}
+                      minLength={4}
                       autoComplete="new-password"
                       required
                     />
@@ -519,7 +519,7 @@ export default function UsersPage() {
                       type="password"
                       value={form.password_confirmation}
                       onChange={handleChange}
-                      minLength={12}
+                      minLength={4}
                       autoComplete="new-password"
                       required
                     />

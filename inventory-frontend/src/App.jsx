@@ -48,16 +48,7 @@ export default function App() {
 
           {/* User Management */}
           <Route element={<PermissionRoute permission="users.view" />}>
-            <Route
-              path="/users"
-              element={
-                <ModulePlaceholder
-                  title="Users"
-                  description="Manage users and assign roles."
-                  endpoint="GET /api/users"
-                />
-              }
-            />
+            <Route path="/users" element={<UsersPage />} />
           </Route>
 
           {/* Role Management */}
