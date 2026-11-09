@@ -50,6 +50,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // ROLE MANAGEMENT
     // ==========================
 
+
+    Route::get(
+        '/roles/assignable-permissions',
+        [RoleController::class, 'assignablePermissions']
+    )->middleware([
+        'auth:sanctum',
+        'can:roles.update',
+        'can:permissions.assign',
+    ]);
+
     Route::get('/roles', [
         RoleController::class,
         'index'

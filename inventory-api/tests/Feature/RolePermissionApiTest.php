@@ -253,4 +253,116 @@ class RolePermissionApiTest extends TestCase
         $this->getJson('/api/roles')
             ->assertUnauthorized();
     }
+
+    public function test_admin_can_load_assignable_permissions_without_permissions_view(): void
+    {
+        $admin = $this->adminWithPermissions([
+            'roles.update',
+            'permissions.assign',
+            'items.view',
+        ]);
+
+        Permission::create([
+            'name' => 'items.delete',
+            'guard_name' => 'web',
+        ]);
+
+        Permission::create([
+            'name' => 'custom.stock.audit',
+            'guard_name' => 'web',
+        ]);
+
+        Sanctum::actingAs($admin);
+
+        // This Admin cannot browse the full permissions API.
+        $this->getJson('/api/permissions')
+            ->assertForbidden();
+
+        // But they can request assignable options.
+        $response = $this->getJson(
+            '/api/roles/assignable-permissions'
+        )->assertOk();
+
+        $names = collect($response->json('data'))
+            ->pluck('name')
+            ->all();
+
+        $this->assertContains('items.view', $names);
+
+        $this->assertContains(
+            'custom.stock.audit',
+            $names
+        );
+
+        $this->assertNotContains(
+            'items.delete',
+            $names
+        );
+    }
+
+    public function test_roles_list_indicates_which_roles_admin_can_manage(): void
+    {
+        $admin = $this->adminWithPermissions([
+            'roles.view',
+            'items.view',
+        ]);
+
+        $viewer = Role::create([
+            'name' => 'Viewer',
+            'guard_name' => 'web',
+        ]);
+
+        $viewer->givePermissionTo('items.view');
+
+        $deletePermission = Permission::create([
+            'name' => 'items.delete',
+            'guard_name' => 'web',
+        ]);
+
+        $privilegedRole = Role::create([
+            'name' => 'Stock Deleter',
+            'guard_name' => 'web',
+        ]);
+
+        $privilegedRole->givePermissionTo(
+            $deletePermission
+        );
+
+        Role::firstOrCreate([
+            'name' => 'Super Admin',
+            'guard_name' => 'web',
+        ]);
+
+        Sanctum::actingAs($admin);
+
+        $response = $this->getJson('/api/roles')
+            ->assertOk();
+
+        $roles = collect($response->json('data'));
+
+        $this->assertTrue(
+            $roles->firstWhere('name', 'Viewer')['can_manage']
+        );
+
+        $this->assertFalse(
+            $roles->firstWhere('name', 'Stock Deleter')['can_manage']
+        );
+
+        $this->assertFalse(
+            $roles->firstWhere('name', 'Super Admin')['can_manage']
+        );
+    }
+
+    public function test_user_without_assignment_permission_cannot_load_options(): void
+    {
+        $user = $this->adminWithPermissions([
+            'roles.view',
+            'roles.update',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/roles/assignable-permissions')
+            ->assertForbidden();
+    }
 }

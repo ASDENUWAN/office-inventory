@@ -14,19 +14,33 @@ use Spatie\Permission\Models\Permission;
 class RoleController extends Controller
 {
     // GET /api/roles
-    public function index(): JsonResponse
-    {
+
+    public function index(
+        Request $request,
+        RolePermissionGuard $guard
+    ): JsonResponse {
+        $actor = $request->user();
+
         $roles = Role::with('permissions')
             ->where('guard_name', 'web')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function (Role $role) use ($actor, $guard) {
+                return [
+                    ...$this->formatRole($role),
+
+                    'can_manage' => $guard->canManageRole(
+                        $actor,
+                        $role
+                    ),
+                ];
+            });
 
         return response()->json([
-            'data' => $roles->map(
-                fn(Role $role) => $this->formatRole($role)
-            ),
+            'data' => $roles,
         ]);
     }
+
 
     // POST /api/roles
     public function store(
@@ -171,5 +185,37 @@ class RoleController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+
+    /**
+     * GET /api/roles/assignable-permissions
+     *
+     * Return permissions the authenticated
+     * user may assign to regular roles.
+     */
+    public function assignablePermissions(
+        Request $request,
+        RolePermissionGuard $guard
+    ): JsonResponse {
+        $actor = $request->user();
+
+        $permissions = Permission::query()
+            ->where('guard_name', 'web')
+            ->orderBy('name')
+            ->get()
+            ->filter(
+                fn(Permission $permission) =>
+                $guard->canGrant($actor, $permission)
+            )
+            ->map(fn(Permission $permission) => [
+                'id' => $permission->id,
+                'name' => $permission->name,
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $permissions,
+        ]);
     }
 }
