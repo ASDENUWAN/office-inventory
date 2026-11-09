@@ -1,0 +1,359 @@
+/* USERS MANAGEMENT PAGE */
+
+.usr-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.usr-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.usr-heading h1 {
+  margin: 0 0 8px;
+  font-size: 25px;
+}
+
+.usr-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.usr-heading-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* BUTTONS */
+
+.usr-btn {
+  padding: 10px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.usr-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.usr-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.usr-btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.usr-btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.usr-btn-small {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.usr-btn-role {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* CARDS */
+
+.usr-card {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.usr-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.usr-card-heading h2 {
+  margin: 0 0 7px;
+  font-size: 19px;
+}
+
+.usr-card-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.usr-close {
+  border: 0;
+  background: transparent;
+  padding: 0 5px;
+  font-size: 26px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* USER FORMS */
+
+.usr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.usr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.usr-field label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.usr-field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  font: inherit;
+  font-size: 14px;
+}
+
+.usr-field input:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.usr-field-error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.usr-help {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.usr-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* ROLE ASSIGNMENT */
+
+.usr-role-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.usr-role-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.usr-role-option:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.usr-role-option input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #2563eb;
+}
+
+/* USER TABLE */
+
+.usr-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.usr-table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.usr-table th {
+  padding: 14px 12px;
+  text-align: left;
+  background: #f8fafc;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.usr-table td {
+  padding: 16px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.usr-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.usr-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usr-person strong,
+.usr-person small {
+  display: block;
+}
+
+.usr-person small {
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.usr-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: bold;
+}
+
+.usr-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.usr-role-badge {
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usr-no-role {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.usr-protected {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.usr-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+/* PAGINATION */
+
+.usr-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding-top: 22px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.usr-pagination-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* MESSAGES */
+
+.usr-alert {
+  padding: 13px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.usr-success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.usr-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.usr-empty {
+  padding: 40px 15px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+  .usr-card {
+    padding: 17px;
+  }
+
+  .usr-heading-actions {
+    width: 100%;
+  }
+
+  .usr-form-grid,
+  .usr-role-options {
+    grid-template-columns: 1fr;
+  }
+
+  .usr-form-actions .usr-btn {
+    flex: 1;
+  }
+}
