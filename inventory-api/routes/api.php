@@ -153,6 +153,13 @@ Route::middleware('auth:sanctum')->group(function () {
     ])->middleware('can:users.assign-roles');
 });
 
+Route::get(
+    '/category-types/options',
+    [CategoryTypeController::class, 'options']
+)->middleware([
+    'auth:sanctum',
+    'can:categories.view',
+]);
 
 Route::middleware([
     'auth:sanctum',
@@ -190,13 +197,6 @@ Route::middleware([
     );
 });
 
-Route::get(
-    '/category-types/options',
-    [CategoryTypeController::class, 'options']
-)->middleware([
-    'auth:sanctum',
-    'can:categories.view',
-]);
 
 
 

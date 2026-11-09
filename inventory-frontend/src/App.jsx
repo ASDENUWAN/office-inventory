@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 
 import CategoryTypesPage from "./pages/CategoryTypesPage";
+import CategoriesPage from "./pages/CategoriesPage";
 
 export default function App() {
   return (
@@ -36,6 +37,10 @@ export default function App() {
                 />
               }
             />
+          </Route>
+          {/* Categories */}
+          <Route element={<PermissionRoute permission="categories.view" />}>
+            <Route path="/categories" element={<CategoriesPage />} />
           </Route>
 
           {/* Category Types */}
