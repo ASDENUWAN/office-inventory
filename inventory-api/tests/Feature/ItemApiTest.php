@@ -251,4 +251,33 @@ class ItemApiTest extends TestCase
         $this->getJson('/api/items')
             ->assertUnauthorized();
     }
+
+    public function test_item_viewer_can_load_form_options(): void
+    {
+        [$laptop, $good] = $this->createCategories();
+
+        $viewer = $this->userWithPermissions([
+            'items.view',
+        ]);
+
+        Sanctum::actingAs($viewer);
+
+        $this->getJson('/api/items/form-options')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.item_categories')
+            ->assertJsonCount(1, 'data.conditions')
+            ->assertJsonPath(
+                'data.item_categories.0.id',
+                $laptop->id
+            )
+            ->assertJsonPath(
+                'data.conditions.0.id',
+                $good->id
+            );
+
+        // This user can read form options without
+        // access to category management.
+        $this->getJson('/api/categories')
+            ->assertForbidden();
+    }
 }
