@@ -102,4 +102,26 @@ class CategoryTypeController extends Controller
 
         return response()->json(null, 204);
     }
+
+
+    /**
+     * GET /api/category-types/options
+     *
+     * Return active category types for dropdowns.
+     */
+    public function options(): JsonResponse
+    {
+        $categoryTypes = CategoryType::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'code',
+            ]);
+
+        return response()->json([
+            'data' => $categoryTypes,
+        ]);
+    }
 }
