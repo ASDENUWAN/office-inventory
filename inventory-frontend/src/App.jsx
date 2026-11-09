@@ -11,6 +11,8 @@ import ModulePlaceholder from "./pages/ModulePlaceholder";
 import CategoryTypesPage from "./pages/CategoryTypesPage";
 import CategoriesPage from "./pages/CategoriesPage";
 
+import ItemsPage from "./pages/ItemsPage";
+
 export default function App() {
   return (
     <Routes>
@@ -27,17 +29,9 @@ export default function App() {
 
           {/* Inventory Items */}
           <Route element={<PermissionRoute permission="items.view" />}>
-            <Route
-              path="/items"
-              element={
-                <ModulePlaceholder
-                  title="Inventory Items"
-                  description="Manage office inventory."
-                  endpoint="GET /api/items"
-                />
-              }
-            />
+            <Route path="/items" element={<ItemsPage />} />
           </Route>
+
           {/* Categories */}
           <Route element={<PermissionRoute permission="categories.view" />}>
             <Route path="/categories" element={<CategoriesPage />} />
