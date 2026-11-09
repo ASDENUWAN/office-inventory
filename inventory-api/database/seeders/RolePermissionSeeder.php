@@ -34,10 +34,13 @@ class RolePermissionSeeder extends Seeder
             // Category type permissions
             'category-types.manage',
 
+
             // User management permissions
             'users.view',
             'users.create',
+            'users.update',
             'users.assign-roles',
+
 
             // Role management permissions
             'roles.view',

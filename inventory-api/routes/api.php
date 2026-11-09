@@ -8,6 +8,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 
+use App\Http\Controllers\UserController;
+
 use App\Http\Controllers\CategoryTypeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ItemController;
@@ -110,6 +112,45 @@ Route::middleware('auth:sanctum')->group(function () {
         PermissionController::class,
         'destroy'
     ])->middleware('can:permissions.delete');
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Get all users
+    Route::get('/users', [
+        UserController::class,
+        'index'
+    ])->middleware('can:users.view');
+
+    // Create a user
+    Route::post('/users', [
+        UserController::class,
+        'store'
+    ])->middleware('can:users.create');
+
+    // Get one user
+    Route::get('/users/{user}', [
+        UserController::class,
+        'show'
+    ])->middleware('can:users.view');
+
+    // Update user profile
+    Route::put('/users/{user}', [
+        UserController::class,
+        'update'
+    ])->middleware('can:users.update');
+
+    Route::patch('/users/{user}', [
+        UserController::class,
+        'update'
+    ])->middleware('can:users.update');
+
+    // Assign or remove user roles
+    Route::put('/users/{user}/roles', [
+        UserController::class,
+        'syncRoles'
+    ])->middleware('can:users.assign-roles');
 });
 
 
