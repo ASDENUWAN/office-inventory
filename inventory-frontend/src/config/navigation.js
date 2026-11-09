@@ -1,0 +1,51 @@
+export const navigationItems = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    icon: "▦",
+    group: "Workspace",
+    permission: null,
+  },
+  {
+    label: "Items",
+    path: "/items",
+    icon: "▣",
+    group: "Workspace",
+    permission: "items.view",
+  },
+  {
+    label: "Categories",
+    path: "/categories",
+    icon: "▤",
+    group: "Workspace",
+    permission: "categories.view",
+  },
+  {
+    label: "Category Types",
+    path: "/category-types",
+    icon: "▥",
+    group: "Workspace",
+    permission: "category-types.manage",
+  },
+  {
+    label: "Users",
+    path: "/users",
+    icon: "♙",
+    group: "Administration",
+    permission: "users.view",
+  },
+  {
+    label: "Roles",
+    path: "/roles",
+    icon: "♧",
+    group: "Administration",
+    permission: "roles.view",
+  },
+  {
+    label: "Permissions",
+    path: "/permissions",
+    icon: "⚿",
+    group: "Administration",
+    permission: "permissions.view",
+  },
+];
