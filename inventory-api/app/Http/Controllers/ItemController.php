@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateItemRequest;
 use App\Http\Requests\AdjustItemQuantityRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\Category;
+
 
 class ItemController extends Controller
 {
@@ -125,5 +127,39 @@ class ItemController extends Controller
         $item->delete();
 
         return response()->json(null, 204);
+    }
+
+
+    /**
+     * GET /api/items/form-options
+     *
+     * Return active categories for the Item form.
+     */
+    public function formOptions(): JsonResponse
+    {
+        $itemCategories = Category::query()
+            ->where('is_active', true)
+            ->whereHas('categoryType', function ($query) {
+                $query->where('code', 'ITEM_CATEGORY')
+                    ->where('is_active', true);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $conditions = Category::query()
+            ->where('is_active', true)
+            ->whereHas('categoryType', function ($query) {
+                $query->where('code', 'ITEM_CONDITION')
+                    ->where('is_active', true);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'data' => [
+                'item_categories' => $itemCategories,
+                'conditions' => $conditions,
+            ],
+        ]);
     }
 }

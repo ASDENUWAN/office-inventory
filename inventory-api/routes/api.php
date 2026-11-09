@@ -240,6 +240,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
+Route::get(
+    '/items/form-options',
+    [ItemController::class, 'formOptions']
+)->middleware('can:items.view');
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // View all items
