@@ -7,32 +7,92 @@ use App\Support\RolePermissionGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\DB;
 
 class PermissionController extends Controller
 {
-    // GET /api/permissions
+
     public function index(
         Request $request,
         RolePermissionGuard $guard
     ): JsonResponse {
-        $user = $request->user();
+        $actor = $request->user();
 
-        $canAssign = $user->can('permissions.assign')
-            && $user->can('roles.update');
+        $canAssign = $actor->can('permissions.assign')
+            && $actor->can('roles.update');
 
-        $permissions = Permission::where('guard_name', 'web')
+        $canDelete = $actor->can('permissions.delete');
+
+        // Spatie's direct permission assignment table.
+        $directTable = config(
+            'permission.table_names.model_has_permissions',
+            'model_has_permissions'
+        );
+
+        // Count direct permission assignments using
+        // the pivot table instead of Permission::users().
+        $directCounts = DB::table($directTable)
+            ->select('permission_id')
+            ->selectRaw('COUNT(*) AS total')
+            ->groupBy('permission_id')
+            ->pluck('total', 'permission_id');
+
+        // withCount('roles') uses a normal relationship
+        // and does not require dynamic user model resolution.
+        $permissions = Permission::query()
+            ->where('guard_name', 'web')
+            ->withCount('roles')
             ->orderBy('name')
             ->get()
             ->map(function (Permission $permission) use (
-                $user,
+                $actor,
                 $guard,
-                $canAssign
+                $canAssign,
+                $canDelete,
+                $directCounts
             ) {
+                $isCustom = str_starts_with(
+                    $permission->name,
+                    'custom.'
+                );
+
+                // Direct assignments from the pivot table.
+                $usersCount = (int) $directCounts->get(
+                    $permission->id,
+                    0
+                );
+
+                // Role assignment count from Eloquent.
+                $rolesCount = (int) $permission->roles_count;
+
+                $isAssigned = (
+                    $rolesCount > 0 ||
+                    $usersCount > 0
+                );
+
                 return [
                     'id' => $permission->id,
                     'name' => $permission->name,
+
+                    'type' => $isCustom
+                        ? 'custom'
+                        : 'core',
+
+                    'roles_count' => $rolesCount,
+
+                    // Counts direct model assignments.
+                    // Our application assigns these to users.
+                    'users_count' => $usersCount,
+
                     'assignable' => $canAssign
-                        && $guard->canGrant($user, $permission),
+                        && $guard->canGrant(
+                            $actor,
+                            $permission
+                        ),
+
+                    'can_delete' => $canDelete
+                        && $isCustom
+                        && !$isAssigned,
                 ];
             });
 
@@ -40,6 +100,10 @@ class PermissionController extends Controller
             'data' => $permissions,
         ]);
     }
+
+
+
+
 
     // POST /api/permissions
     public function store(
@@ -98,14 +162,38 @@ class PermissionController extends Controller
         }
 
         // Do not delete permissions assigned to users or roles.
+        // if (
+        //     $permission->roles()->exists() ||
+        //     $permission->users()->exists()
+        // ) {
+        //     return response()->json([
+        //         'message' => 'Remove all permission assignments first.',
+        //     ], 409);
+        // }
+
+
+        $directTable = config(
+            'permission.table_names.model_has_permissions',
+            'model_has_permissions'
+        );
+
+        $hasRoleAssignments = $permission
+            ->roles()
+            ->exists();
+
+        $hasDirectAssignments = DB::table($directTable)
+            ->where('permission_id', $permission->id)
+            ->exists();
+
         if (
-            $permission->roles()->exists() ||
-            $permission->users()->exists()
+            $hasRoleAssignments ||
+            $hasDirectAssignments
         ) {
             return response()->json([
                 'message' => 'Remove all permission assignments first.',
             ], 409);
         }
+
 
         $permission->delete();
 

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionRoute from "./components/PermissionRoute";
 import RolesPage from "./pages/RolesPage";
+import PermissionsPage from "./pages/PermissionsPage";
 import DashboardLayout from "./components/DashboardLayout";
 
 import LoginPage from "./pages/LoginPage";
@@ -57,18 +58,9 @@ export default function App() {
             <Route path="/roles" element={<RolesPage />} />
           </Route>
 
-          {/* Permission Management */}
+          {/* Permissions Management */}
           <Route element={<PermissionRoute permission="permissions.view" />}>
-            <Route
-              path="/permissions"
-              element={
-                <ModulePlaceholder
-                  title="Permissions"
-                  description="Manage application permissions."
-                  endpoint="GET /api/permissions"
-                />
-              }
-            />
+            <Route path="/permissions" element={<PermissionsPage />} />
           </Route>
         </Route>
       </Route>
