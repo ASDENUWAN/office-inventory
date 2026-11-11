@@ -57,6 +57,7 @@ export default function UsersPage() {
   const canCreate = hasPermission("users.create");
   const canUpdate = hasPermission("users.update");
   const canAssign = hasPermission("users.assign-roles");
+  const canAssignDirect = hasPermission("users.assign-permissions");
 
   // USER LIST
   const [users, setUsers] = useState([]);
@@ -71,7 +72,7 @@ export default function UsersPage() {
   const [rolesLoading, setRolesLoading] = useState(canAssign);
   const [rolesError, setRolesError] = useState("");
 
-  // FORMS: create, edit, roles, or null
+  // FORMS: create, edit, roles, permissions, or null
   const [mode, setMode] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -83,6 +84,54 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
 
   const [notice, setNotice] = useState("");
+
+  const [directPermissionOptions, setDirectPermissionOptions] = useState([]);
+
+  const [directPermissionsLoading, setDirectPermissionsLoading] =
+    useState(canAssignDirect);
+
+  const [directPermissionsError, setDirectPermissionsError] = useState("");
+
+  const [selectedDirectPermissions, setSelectedDirectPermissions] = useState(
+    [],
+  );
+
+  useEffect(() => {
+    if (!canAssignDirect) {
+      setDirectPermissionOptions([]);
+      setDirectPermissionsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadDirectPermissionOptions() {
+      setDirectPermissionsLoading(true);
+      setDirectPermissionsError("");
+
+      try {
+        const response = await api.get("/api/users/assignable-permissions", {
+          signal: controller.signal,
+        });
+
+        if (!controller.signal.aborted) {
+          setDirectPermissionOptions(response.data.data);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted && !axios.isCancel(error)) {
+          setDirectPermissionsError(getErrorMessage(error));
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setDirectPermissionsLoading(false);
+        }
+      }
+    }
+
+    loadDirectPermissionOptions();
+
+    return () => controller.abort();
+  }, [canAssignDirect]);
 
   // 1. Load users when page changes or data is refreshed.
   useEffect(() => {
@@ -162,15 +211,14 @@ export default function UsersPage() {
     setReloadKey((previous) => previous + 1);
   };
 
-  // 3. Protect the current user and Super Admin accounts.
+  // Protect self, Super Admin, and accounts outside this user's authority.
   const isProtectedUser = (target) => {
-    const isSelf = target.id === currentUser?.id;
-
+    const isSelf = Number(target.id) === Number(currentUser?.id);
     const isSuperAdmin = target.roles?.some(
       (role) => role.name === "Super Admin",
     );
 
-    return isSelf || isSuperAdmin;
+    return isSelf || isSuperAdmin || target.can_manage === false;
   };
 
   // 4. Open Create User form.
@@ -234,13 +282,65 @@ export default function UsersPage() {
     setNotice("");
   };
 
-  const closeForm = () => {
-    if (saving) return;
+  const openDirectPermissions = (target) => {
+    if (
+      !canAssignDirect ||
+      isProtectedUser(target) ||
+      directPermissionsLoading ||
+      directPermissionsError
+    ) {
+      return;
+    }
 
+    // The updated UserController must return inherited permissions.
+    // Never assume they are empty if the backend has not been updated.
+    if (!Array.isArray(target.inherited_permissions)) {
+      setListError(
+        "Inherited permissions are missing from the API. " +
+          "Update UserController::formatUser() and refresh.",
+      );
+      return;
+    }
+
+    const existing = target.direct_permissions ?? [];
+
+    const allowedNames = new Set(
+      directPermissionOptions.map((permission) => permission.name),
+    );
+
+    // Prevent the form from silently removing
+    // a permission outside the actor's authority.
+    const hasRestrictedPermission = existing.some(
+      (name) => !allowedNames.has(name),
+    );
+
+    if (hasRestrictedPermission) {
+      setListError(
+        "This user has direct permissions outside your " +
+          "grant authority. Ask Super Admin to manage them.",
+      );
+      return;
+    }
+
+    setMode("permissions");
+    setSelectedUser(target);
+
+    setSelectedDirectPermissions([...existing]);
+
+    setFormErrors({});
+    setFormError("");
+    setListError("");
+    setNotice("");
+  };
+
+  const closeForm = () => {
+    // Buttons are disabled while saving. Internal success handlers
+    // must still be able to close the form before saving becomes false.
     setMode(null);
     setSelectedUser(null);
     setForm({ ...emptyForm });
     setSelectedRoleIds([]);
+    setSelectedDirectPermissions([]);
     setFormErrors({});
     setFormError("");
   };
@@ -371,15 +471,84 @@ export default function UsersPage() {
 
   const fieldError = (name) => formErrors[name]?.[0];
 
+  const toggleDirectPermission = (name) => {
+    setSelectedDirectPermissions((previous) =>
+      previous.includes(name)
+        ? previous.filter((item) => item !== name)
+        : [...previous, name],
+    );
+  };
+
+  const handleDirectPermissionSubmit = async (event) => {
+    event.preventDefault();
+
+    if (
+      !canAssignDirect ||
+      !selectedUser ||
+      mode !== "permissions" ||
+      saving ||
+      directPermissionsLoading ||
+      directPermissionsError
+    ) {
+      return;
+    }
+
+    const existing = selectedUser.direct_permissions ?? [];
+
+    if (selectedDirectPermissions.length === 0 && existing.length > 0) {
+      const confirmed = window.confirm(
+        `Remove all direct permissions from "${selectedUser.name}"?`,
+      );
+
+      if (!confirmed) return;
+    }
+
+    setSaving(true);
+    setFormError("");
+    setFormErrors({});
+    setNotice("");
+
+    try {
+      await api.put(`/api/users/${selectedUser.id}/permissions`, {
+        permissions: selectedDirectPermissions,
+      });
+
+      closeForm();
+      refreshUsers();
+
+      setNotice("Direct user permissions updated successfully.");
+    } catch (error) {
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        setFormErrors(error.response.data.errors);
+      } else {
+        setFormError(getErrorMessage(error));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Merge assignable permissions with all inherited permissions.
+  // Inherited permissions must remain visible even if the current Admin
+  // does not have authority to grant them directly.
+  const inheritedPermissionNames = new Set(
+    selectedUser?.inherited_permissions ?? [],
+  );
+
+  const shownPermissionNames = Array.from(
+    new Set([
+      ...directPermissionOptions.map((permission) => permission.name),
+      ...(selectedUser?.inherited_permissions ?? []),
+    ]),
+  ).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="usr-page">
       {/* PAGE HEADER */}
       <div className="usr-heading">
         <div>
           <h1>Users Management</h1>
-          <p>
-            Create users, edit account details, and manage their assigned roles.
-          </p>
+          <p>Create users, assign roles, and manage direct permissions.</p>
         </div>
 
         <div className="usr-heading-actions">
@@ -653,6 +822,150 @@ export default function UsersPage() {
         </section>
       )}
 
+      {/* DIRECT USER PERMISSIONS FORM */}
+      {mode === "permissions" && selectedUser && (
+        <section className="usr-card">
+          <div className="usr-card-heading">
+            <div>
+              <h2>Manage User Permissions</h2>
+              <p>
+                User: <strong>{selectedUser.name}</strong>
+              </p>
+              <p className="usr-help">
+                Assigned Roles:{" "}
+                <strong>
+                  {selectedUser.roles?.length > 0
+                    ? selectedUser.roles.map((role) => role.name).join(", ")
+                    : "No roles assigned"}
+                </strong>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="usr-close"
+              onClick={closeForm}
+              disabled={saving}
+              aria-label="Close permissions form"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="usr-permission-note">
+            <strong>Checked and locked = inherited from a role.</strong>
+            <p>
+              Role permissions cannot be changed here. To change those, edit the
+              role in Roles Management or change the user's role.
+            </p>
+            <p>
+              You can check or uncheck direct permissions below. Only those
+              direct assignments are sent to Laravel when saving.
+            </p>
+          </div>
+
+          <form onSubmit={handleDirectPermissionSubmit}>
+            {directPermissionsLoading ? (
+              <div className="usr-empty">Loading permission options...</div>
+            ) : directPermissionsError ? (
+              <div className="usr-alert usr-error" role="alert">
+                {directPermissionsError}
+              </div>
+            ) : shownPermissionNames.length === 0 ? (
+              <div className="usr-empty">
+                No inherited or assignable permissions available.
+              </div>
+            ) : (
+              <div className="usr-direct-permissions">
+                {shownPermissionNames.map((name) => {
+                  const inherited = inheritedPermissionNames.has(name);
+                  const directlyAssigned =
+                    selectedDirectPermissions.includes(name);
+
+                  return (
+                    <label
+                      key={name}
+                      className={`usr-role-option ${
+                        inherited ? "usr-inherited-option" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={inherited || directlyAssigned}
+                        disabled={saving || inherited}
+                        onChange={() => toggleDirectPermission(name)}
+                      />
+
+                      <span className="usr-permission-details">
+                        <strong>{name}</strong>
+                        {inherited ? (
+                          <small className="usr-inherited-label">
+                            {directlyAssigned
+                              ? "From Role + Direct (locked)"
+                              : "From Role (locked)"}
+                          </small>
+                        ) : directlyAssigned ? (
+                          <small className="usr-direct-label">
+                            Direct permission — editable
+                          </small>
+                        ) : (
+                          <small className="usr-available-label">
+                            Available for direct assignment
+                          </small>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            {Object.keys(formErrors).length > 0 && (
+              <div className="usr-alert usr-error" role="alert">
+                {Object.values(formErrors).flat().join(" ")}
+              </div>
+            )}
+
+            {formError && (
+              <div className="usr-alert usr-error" role="alert">
+                {formError}
+              </div>
+            )}
+
+            <p className="usr-help">
+              {selectedDirectPermissions.length} directly assigned;{" "}
+              {inheritedPermissionNames.size} inherited from roles. Saving
+              changes only direct permissions. If a permission is both inherited
+              and directly assigned, its existing direct grant stays in place
+              while that checkbox is locked.
+            </p>
+
+            <div className="usr-form-actions">
+              <button
+                type="button"
+                className="usr-btn"
+                onClick={closeForm}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="usr-btn usr-btn-primary"
+                disabled={
+                  saving ||
+                  directPermissionsLoading ||
+                  Boolean(directPermissionsError)
+                }
+              >
+                {saving ? "Saving..." : "Save Permissions"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
       {/* USER TABLE */}
       <section className="usr-card">
         <div className="usr-card-heading">
@@ -676,6 +989,7 @@ export default function UsersPage() {
                   <th>User</th>
                   <th>Email</th>
                   <th>Assigned Roles</th>
+                  <th>Direct Permissions</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -717,6 +1031,20 @@ export default function UsersPage() {
                       </td>
 
                       <td>
+                        <div className="usr-badges">
+                          {target.direct_permissions?.length > 0 ? (
+                            target.direct_permissions.map((name) => (
+                              <span className="usr-direct-badge" key={name}>
+                                {name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="usr-no-role">None</span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td>
                         {target.created_at
                           ? new Date(target.created_at).toLocaleDateString()
                           : "—"}
@@ -752,7 +1080,21 @@ export default function UsersPage() {
                               </button>
                             )}
 
-                            {!canUpdate && !canAssign && (
+                            {canAssignDirect && (
+                              <button
+                                type="button"
+                                className="usr-btn usr-btn-small usr-btn-role"
+                                onClick={() => openDirectPermissions(target)}
+                                disabled={
+                                  directPermissionsLoading ||
+                                  Boolean(directPermissionsError)
+                                }
+                              >
+                                Direct Permissions
+                              </button>
+                            )}
+
+                            {!canUpdate && !canAssign && !canAssignDirect && (
                               <span className="usr-help">View only</span>
                             )}
                           </div>
