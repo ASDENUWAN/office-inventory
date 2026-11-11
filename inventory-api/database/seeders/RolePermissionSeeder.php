@@ -53,6 +53,8 @@ class RolePermissionSeeder extends Seeder
             'permissions.create',
             'permissions.assign',
             'permissions.delete',
+
+            'users.assign-permissions',
         ];
 
         // Insert initial permissions.

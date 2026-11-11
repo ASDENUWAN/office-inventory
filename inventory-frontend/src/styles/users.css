@@ -357,3 +357,105 @@
     flex: 1;
   }
 }
+
+/* DIRECT USER PERMISSIONS */
+
+.usr-direct-permissions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.usr-direct-permissions .usr-role-option {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .usr-direct-permissions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Append these rules to src/styles/users.css */
+
+.usr-permission-note {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.usr-permission-note strong {
+  font-size: 14px;
+}
+.usr-permission-note p {
+  margin: 7px 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.usr-direct-permissions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.usr-inherited-option,
+.usr-inherited-option:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.usr-inherited-option input {
+  cursor: not-allowed;
+}
+.usr-permission-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.usr-permission-details strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.usr-permission-details small {
+  font-size: 11px;
+}
+.usr-inherited-label {
+  color: #64748b;
+}
+.usr-direct-label {
+  color: #166534;
+}
+.usr-available-label {
+  color: #64748b;
+}
+
+.usr-direct-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.usr-table {
+  min-width: 1050px;
+}
+
+@media (max-width: 700px) {
+  .usr-direct-permissions {
+    grid-template-columns: 1fr;
+  }
+}

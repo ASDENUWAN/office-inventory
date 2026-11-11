@@ -130,6 +130,16 @@ Route::get(
     [UserController::class, 'assignableRoles']
 )->middleware('can:users.assign-roles');
 
+Route::get(
+    '/users/assignable-permissions',
+    [UserController::class, 'assignablePermissions']
+)->middleware('can:users.assign-permissions');
+
+Route::put(
+    '/users/{user}/permissions',
+    [UserController::class, 'syncPermissions']
+)->middleware('can:users.assign-permissions');
+
 
 Route::middleware('auth:sanctum')->group(function () {
 
